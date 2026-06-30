@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@theme {
+  /* ===== LIGHT PINK BACKGROUND THEME ===== */
+
+  /* Override default teal colors → rose/pink accents */
+  --color-teal-50: #fff1f2;
+  --color-teal-100: #ffe4e6;
+  --color-teal-200: #fecdd3;
+  --color-teal-300: #fda4af;
+  --color-teal-400: #fb7185;
+  --color-teal-500: #f43f5e;
+  --color-teal-600: #e11d48;
+  --color-teal-700: #be123c;
+  --color-teal-800: #9f1239;
+  --color-teal-900: #881337;
+  --color-teal-950: #4c0519;
+
+  /* Override default sky colors → rose/pink accents */
+  --color-sky-50: #fff1f2;
+  --color-sky-100: #ffe4e6;
+  --color-sky-200: #fecdd3;
+  --color-sky-300: #fda4af;
+  --color-sky-400: #fb7185;
+  --color-sky-500: #f43f5e;
+  --color-sky-600: #e11d48;
+  --color-sky-700: #be123c;
+  --color-sky-800: #9f1239;
+  --color-sky-900: #881337;
+
+  /* Override default cyan colors → rose/pink accents */
+  --color-cyan-50: #fff1f2;
+  --color-cyan-100: #ffe4e6;
+  --color-cyan-200: #fecdd3;
+  --color-cyan-300: #fda4af;
+  --color-cyan-400: #fb7185;
+  --color-cyan-500: #f43f5e;
+  --color-cyan-600: #e11d48;
+  --color-cyan-700: #be123c;
+  --color-cyan-800: #9f1239;
+  --color-cyan-900: #881337;
+
+  /* Custom neon colors mapped to pinks */
+  --color-neon-blue: #fb7185;
+  --color-neon-pink: #f43f5e;
+  --color-neon-purple: #ec4899;
+
+  /* Override SLATE colors for a light pink page:
+     - High numbers (bg-slate-800/900) → light pink/white (backgrounds)
+     - Low numbers (text-slate-300/400) → dark (readable text) */
+  --color-slate-50: #fff1f2;
+  --color-slate-100: #ffe4e6;
+  --color-slate-200: #fecdd3;
+  --color-slate-300: #6b2140;   /* dark rose — used for body text */
+  --color-slate-400: #8b3a5a;   /* medium-dark — muted text */
+  --color-slate-500: #9f1239;   /* dark rose */
+  --color-slate-600: #f9a8b8;   /* light pink — used for borders */
+  --color-slate-700: #f9a8b8;   /* light pink — used for borders */
+  --color-slate-800: #ffffff;   /* white — card backgrounds */
+  --color-slate-900: #fff1f2;   /* rose-50 — page background */
+
+  /* Override GRAY colors similarly */
+  --color-gray-50: #fff8f9;
+  --color-gray-100: #fff1f3;
+  --color-gray-200: #fce4ec;
+  --color-gray-300: #fecdd3;    /* light pink — borders/dividers */
+  --color-gray-400: #f9a8b8;    /* pink — borders/dividers */
+  --color-gray-500: #9f1239;    /* dark rose accent */
+  --color-gray-600: #7c2d4b;    /* dark — text color */
+  --color-gray-700: #5a1d38;    /* dark — text/button text */
+  --color-gray-800: #ffffff;    /* white — card backgrounds */
+  --color-gray-900: #fff1f2;    /* rose-50 — section backgrounds */
+
+  /* Override PINK so pink-400/500/600 stay vibrant accent */
+  --color-pink-50: #fff1f2;
+  --color-pink-100: #ffe4e6;
+  --color-pink-200: #fecdd3;
+  --color-pink-300: #fda4af;
+  --color-pink-400: #fb7185;
+  --color-pink-500: #f43f5e;
+  --color-pink-600: #e11d48;
+  --color-pink-700: #be123c;
+  --color-pink-800: #9f1239;
+  --color-pink-900: #881337;
+}

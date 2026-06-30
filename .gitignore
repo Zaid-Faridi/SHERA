@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+pcos-pcod-ai-project/venv/
+venv/
+.venv/
+env/
+.env
+
+# Build outputs
+dist/
+build/
+output/
+backend/dist/
+frontend/dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+pcos-pcod-ai-project/__pycache__/
+pcos-pcod-ai-project/uploads/*
+!pcos-pcod-ai-project/uploads/.gitkeep
+
+# ML Models
+# Including them as they are small and needed for the app to function
+# pcos-pcod-ai-project/models/*.h5
+# pcos-pcod-ai-project/models/*.pkl
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+.gemini/
