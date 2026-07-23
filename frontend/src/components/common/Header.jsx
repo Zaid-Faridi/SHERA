@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const Header = ({ setActiveTab, onOpenLogin, onOpenSignup }) => {
+const Header = ({ setActiveTab, onOpenLogin, onOpenSignup, currentUser, onLogout }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -102,29 +102,46 @@ const Header = ({ setActiveTab, onOpenLogin, onOpenSignup }) => {
 
         {/* ── Auth Actions ── */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={onOpenLogin}
-            className="hidden sm:block"
-            style={{
-              background: 'none', border: 'none',
-              padding: '8px 16px', borderRadius: 10,
-              fontSize: '0.875rem', fontWeight: 600,
-              color: '#6B2A5F', cursor: 'pointer',
-              transition: 'all 0.25s ease',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#E11D48'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#6B2A5F'; }}
-          >
-            Log in
-          </button>
+          {currentUser ? (
+            <>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#6B2A5F' }}>
+                Hi, {currentUser.name.split(' ')[0]}
+              </span>
+              <button
+                onClick={onLogout}
+                className="aura-button-outline hidden sm:block"
+                style={{ padding: '8px 16px', fontSize: '0.875rem', borderColor: '#E11D48', color: '#E11D48' }}
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={onOpenLogin}
+                className="hidden sm:block"
+                style={{
+                  background: 'none', border: 'none',
+                  padding: '8px 16px', borderRadius: 10,
+                  fontSize: '0.875rem', fontWeight: 600,
+                  color: '#6B2A5F', cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#E11D48'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#6B2A5F'; }}
+              >
+                Log in
+              </button>
 
-          <button
-            onClick={onOpenSignup}
-            className="aura-button"
-            style={{ padding: '9px 22px', fontSize: '0.875rem' }}
-          >
-            Sign up
-          </button>
+              <button
+                onClick={onOpenSignup}
+                className="aura-button"
+                style={{ padding: '9px 22px', fontSize: '0.875rem' }}
+              >
+                Sign up
+              </button>
+            </>
+          )}
 
           <button
             onClick={() => setActiveTab('onboarding')}

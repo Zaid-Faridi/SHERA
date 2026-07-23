@@ -34,6 +34,61 @@ UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+def validate_ultrasound_image(filepath):
+    """
+    Validates whether the uploaded image is likely an ultrasound scan.
+    Checks: grayscale dominance, dark background, intensity distribution.
+    Returns (is_valid, reason) tuple.
+    """
+    try:
+        img = Image.open(filepath)
+        
+        # Check 1: Image must be loadable and reasonable size
+        width, height = img.size
+        if width < 50 or height < 50:
+            return False, "Image is too small. Please upload a clear ultrasound image."
+        
+        img_rgb = img.convert("RGB")
+        img_array = np.array(img_rgb)
+        
+        # Check 2: Grayscale dominance — ultrasound images are near-monochrome
+        # Calculate color saturation: difference between max and min channel per pixel
+        r, g, b = img_array[:,:,0].astype(float), img_array[:,:,1].astype(float), img_array[:,:,2].astype(float)
+        max_channel = np.maximum(np.maximum(r, g), b)
+        min_channel = np.minimum(np.minimum(r, g), b)
+        
+        # Saturation = (max - min) / (max + 1) to avoid division by zero
+        saturation = (max_channel - min_channel) / (max_channel + 1)
+        avg_saturation = np.mean(saturation)
+        
+        # Ultrasounds are grayscale: avg saturation should be very low (< 0.15)
+        # Colorful photos like selfies, landscapes have saturation > 0.2
+        if avg_saturation > 0.18:
+            return False, "This does not appear to be an ultrasound image. The image contains too much color. Ultrasound scans are typically grayscale. Please upload a valid ovarian ultrasound report."
+        
+        # Check 3: Dark background ratio — ultrasound images have significant dark areas
+        gray = np.mean(img_array, axis=2)
+        dark_pixel_ratio = np.mean(gray < 40)  # pixels with intensity < 40
+        
+        # Ultrasounds typically have 20%+ dark background
+        if dark_pixel_ratio < 0.10:
+            return False, "This does not appear to be an ultrasound image. Ultrasound scans typically have a dark background. Please upload a valid ovarian ultrasound report."
+        
+        # Check 4: Intensity distribution — ultrasound images have a specific histogram
+        # They tend to be dark-heavy with some bright spots (tissue echoes)
+        bright_pixel_ratio = np.mean(gray > 220)  # very bright pixels
+        mid_tone_ratio = np.mean((gray > 80) & (gray < 200))  # mid-range pixels
+        
+        # A normal photo has lots of mid-tones; ultrasound is bimodal (dark + some bright)
+        # If image is mostly bright and mid-tones with little dark, it's likely not an ultrasound
+        if bright_pixel_ratio > 0.5 and dark_pixel_ratio < 0.15:
+            return False, "This does not appear to be an ultrasound image. The image is too bright to be a medical scan. Please upload a valid ovarian ultrasound report."
+        
+        return True, "Valid ultrasound image"
+        
+    except Exception as e:
+        return False, f"Could not process the image: {str(e)}. Please upload a valid image file (JPG, PNG)."
+
 @app.route('/api/predict/tabular', methods=['POST'])
 def predict_tabular():
     if not tabular_model:
@@ -85,10 +140,20 @@ def predict_image():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
+        # Validate that the image is actually an ultrasound
+        is_valid, validation_msg = validate_ultrasound_image(filepath)
+        if not is_valid:
+            os.remove(filepath)
+            return jsonify({
+                "error": "invalid_image",
+                "message": validation_msg,
+                "suggestion": "Please upload an ovarian ultrasound scan image (grayscale medical imaging)."
+            }), 400
+
         # Preprocess the image
         img = Image.open(filepath).convert("RGB")
         img = img.resize((128, 128))
-        img_array = np.array(img) / 255.0
+        img_array = np.array(img).astype(np.float32)
         img_array = np.expand_dims(img_array, axis=0) # Add batch dimension
 
         # Predict
@@ -144,10 +209,20 @@ def predict_combined():
                     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                     file.save(filepath)
                     
+                    # Validate that the image is actually an ultrasound
+                    is_valid, validation_msg = validate_ultrasound_image(filepath)
+                    if not is_valid:
+                        os.remove(filepath)
+                        return jsonify({
+                            "error": "invalid_image",
+                            "message": validation_msg,
+                            "suggestion": "Please upload an ovarian ultrasound scan image (grayscale medical imaging)."
+                        }), 400
+                    
                     if image_model:
                         img = Image.open(filepath).convert("RGB")
                         img = img.resize((128, 128))
-                        img_array = np.array(img) / 255.0
+                        img_array = np.array(img).astype(np.float32)
                         img_array = np.expand_dims(img_array, axis=0)
                         prediction = image_model.predict(img_array)[0][0]
                         
@@ -182,7 +257,8 @@ def predict_combined():
             df = pd.DataFrame.from_dict(input_data)
             tabular_pred = int(tabular_model.predict(df)[0])
             prob = tabular_model.predict_proba(df)[0]
-            tabular_risk = float(max(prob) * 100) if tabular_pred == 1 else float(min(prob) * 100)
+            # prob[1] = probability of class 1 (PCOS), always use this as risk
+            tabular_risk = float(prob[1] * 100)
         else:
             # Mock logic if model not loaded
             bmi = float(clinical_data.get("BMI", 22))
@@ -190,18 +266,49 @@ def predict_combined():
             tabular_risk = 75.0 if (bmi > 25 or ratio > 1.2) else 25.0
             tabular_pred = 1 if tabular_risk > 50 else 0
 
-        # 3. Combine results
-        final_score = (tabular_risk * 0.6) + (image_result["risk_score"] * 0.4)
-        
-        diagnosis = "PCOS" if final_score > 60 else ("PCOD" if final_score > 40 else "Normal")
-        
+        # 3. Clamp extreme confidences to realistic range
+        clamped_image_risk = max(2.0, min(98.0, image_result["risk_score"]))
+        clamped_tabular_risk = max(2.0, min(98.0, tabular_risk))
+
+        # 4. Combine results with weighted fusion
+        final_score = (clamped_tabular_risk * 0.6) + (clamped_image_risk * 0.4)
+
+        # 5. Risk-level based diagnosis with severity
+        if final_score > 70:
+            diagnosis = "PCOS Likely"
+            severity = "High"
+        elif final_score > 50:
+            diagnosis = "PCOS/PCOD Possible"
+            severity = "Moderate"
+        elif final_score > 30:
+            diagnosis = "Low Risk - Monitor"
+            severity = "Low"
+        else:
+            diagnosis = "Normal"
+            severity = "Minimal"
+
+        # 6. Flag ambiguous image results
+        image_confidence_note = ""
+        if 30 < image_result["risk_score"] < 70:
+            image_confidence_note = "Ultrasound analysis was inconclusive. Consider re-uploading a clearer image or consulting a specialist."
+
         return jsonify({
             "diagnosis": diagnosis,
+            "severity": severity,
             "confidence": round(final_score, 2),
             "risk_score": round(final_score, 2),
             "tabular_risk": round(tabular_risk, 2),
             "image_risk": round(image_result["risk_score"], 2),
-            "message": f"Analysis complete. Detected condition: {diagnosis}"
+            "image_confidence_note": image_confidence_note,
+            "message": f"Analysis complete. Risk Level: {severity}. {diagnosis}.",
+            "details": {
+                "clinical_model_weight": "60%",
+                "imaging_model_weight": "40%",
+                "raw_tabular_risk": round(tabular_risk, 2),
+                "raw_image_risk": round(image_result["risk_score"], 2),
+                "clamped_tabular_risk": round(clamped_tabular_risk, 2),
+                "clamped_image_risk": round(clamped_image_risk, 2),
+            }
         })
 
     except Exception as e:

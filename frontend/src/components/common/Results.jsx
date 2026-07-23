@@ -153,9 +153,33 @@ const Results = ({ riskAssessment, setActiveTab }) => {
             </div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>AI Diagnosis</h3>
           </div>
-          <p style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A0A2E', lineHeight: 1.5, margin: 0 }}>
+          <p style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A0A2E', lineHeight: 1.5, margin: '0 0 12px 0' }}>
             {diagnosis || "Assessment complete. Please refer to your doctor."}
           </p>
+          {riskAssessment.severity && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '6px 14px', borderRadius: 999, fontSize: '0.8rem', fontWeight: 800,
+              textTransform: 'uppercase', letterSpacing: '0.06em',
+              background: riskAssessment.severity === 'High' ? 'rgba(225,29,72,0.1)' :
+                          riskAssessment.severity === 'Moderate' ? 'rgba(245,158,11,0.1)' :
+                          riskAssessment.severity === 'Low' ? 'rgba(234,179,8,0.1)' :
+                          'rgba(5,150,105,0.1)',
+              color: riskAssessment.severity === 'High' ? '#E11D48' :
+                     riskAssessment.severity === 'Moderate' ? '#D97706' :
+                     riskAssessment.severity === 'Low' ? '#CA8A04' :
+                     '#059669'
+            }}>
+              <div style={{
+                width: 6, height: 6, borderRadius: '50%',
+                background: riskAssessment.severity === 'High' ? '#E11D48' :
+                             riskAssessment.severity === 'Moderate' ? '#D97706' :
+                             riskAssessment.severity === 'Low' ? '#CA8A04' :
+                             '#059669'
+              }} />
+              {riskAssessment.severity} Risk
+            </span>
+          )}
         </div>
 
         <div style={{
@@ -169,13 +193,32 @@ const Results = ({ riskAssessment, setActiveTab }) => {
             <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>Model Confidence</h3>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#059669', lineHeight: 1 }}>{confidence ? Math.round(confidence * 100) : 92}%</span>
+            <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#059669', lineHeight: 1 }}>{confidence ? Math.round(confidence) : score}%</span>
           </div>
           <p style={{ fontSize: '0.85rem', color: '#9B6B8A', margin: 0 }}>
-            Confidence interval based on historical data matching your profile.
+            Weighted fusion of clinical data (60%) and ultrasound imaging (40%).
           </p>
         </div>
       </div>
+
+      {/* ── IMAGE CONFIDENCE WARNING ── */}
+      {riskAssessment.image_confidence_note && (
+        <div style={{
+          padding: '20px 24px', borderRadius: 16, marginBottom: 32,
+          background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)',
+          display: 'flex', alignItems: 'flex-start', gap: 14,
+          opacity: animate ? 1 : 0, transform: animate ? 'translateY(0)' : 'translateY(10px)',
+          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s'
+        }}>
+          <Ic n="alert" s={20} c="#D97706" />
+          <div>
+            <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#92400E', marginBottom: 4 }}>Ultrasound Analysis Note</div>
+            <p style={{ fontSize: '0.85rem', color: '#78350F', margin: 0, lineHeight: 1.6 }}>
+              {riskAssessment.image_confidence_note}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── RECOMMENDATIONS ── */}
       <div style={{
@@ -194,7 +237,7 @@ const Results = ({ riskAssessment, setActiveTab }) => {
           </div>
         </div>
         
-        <div style={{ padding: '24px', background: 'rgba(225,29,72,0.03)', borderRadius: 16, borderLeft: '4px solid #E11D48', color: '#4c1d32', fontSize: '1rem', lineHeight: 1.7, fontWeight: 500 }}>
+        <div style={{ padding: '24px', background: 'rgba(225,29,72,0.03)', borderRadius: 16, borderLeft: '4px solid #E11D48', color: '#4c1d32', fontSize: '1rem', lineHeight: 1.7, fontWeight: 500, whiteSpace: 'pre-line' }}>
           {recommendation || "Maintain a healthy lifestyle and schedule regular checkups with your healthcare provider."}
         </div>
         

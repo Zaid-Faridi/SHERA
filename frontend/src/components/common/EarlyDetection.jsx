@@ -238,18 +238,47 @@ const EarlyDetection = ({ userData, setActiveTab, imageFile, setImageFile }) => 
     setLoading(true);
     try {
       const payload = {
-        " Age (yrs)": userData.age,
+        "Age (yrs)": userData.age,
         "Weight (Kg)": userData.weight,
-        "Height(Cm) ": userData.height,
+        "Height(Cm)": userData.height,
         "BMI": userData.weight / ((userData.height/100) * (userData.height/100)),
         "Blood Group": 11,
+        "Pulse rate(bpm)": 76,
+        "RR (breaths/min)": 20,
+        "Hb(g/dl)": 11.8,
         "Cycle(R/I)": userData.symptoms?.includes('Irregular periods') ? 4 : 2,
+        "Cycle length(days)": userData.symptoms?.includes('Irregular periods') ? 40 : 28,
+        "Marraige Status (Yrs)": 0,
+        "Pregnant(Y/N)": 0,
+        "No. of abortions": 0,
+        "I   beta-HCG(mIU/mL)": 1.99,
+        "II    beta-HCG(mIU/mL)": 1.99,
+        "FSH(mIU/mL)": 6.5,
+        "LH(mIU/mL)": 5.0,
+        "FSH/LH": 1.3,
+        "Hip(inch)": 36,
+        "Waist(inch)": 30,
+        "Waist:Hip Ratio": 0.83,
+        "TSH (mIU/L)": 2.5,
+        "AMH(ng/mL)": 3.5,
+        "PRL(ng/mL)": 15.0,
+        "Vit D3 (ng/mL)": 25.0,
+        "PRG(ng/mL)": 0.5,
+        "RBS(mg/dl)": 90,
         "Weight gain(Y/N)": userData.symptoms?.includes('Weight gain') ? 1 : 0,
         "hair growth(Y/N)": userData.symptoms?.includes('Excess hair growth') ? 1 : 0,
+        "Skin darkening (Y/N)": userData.symptoms?.includes('Skin darkening') ? 1 : 0,
         "Hair loss(Y/N)": userData.symptoms?.includes('Hair loss') ? 1 : 0,
         "Pimples(Y/N)": userData.symptoms?.includes('Acne') ? 1 : 0,
         "Fast food (Y/N)": userData.lifestyleFactors?.includes('High sugar diet') ? 1 : 0,
-        "Reg.Exercise(Y/N)": userData.lifestyleFactors?.includes('Regular exercise') ? 1 : 0
+        "Reg.Exercise(Y/N)": userData.lifestyleFactors?.includes('Regular exercise') ? 1 : 0,
+        "BP _Systolic (mmHg)": 120,
+        "BP _Diastolic (mmHg)": 80,
+        "Follicle No. (L)": 5,
+        "Follicle No. (R)": 5,
+        "Avg. F size (L) (mm)": 16,
+        "Avg. F size (R) (mm)": 16,
+        "Endometrium (mm)": 7.5
       };
       const formData = new FormData();
       formData.append('file', imageFile);
@@ -260,18 +289,38 @@ const EarlyDetection = ({ userData, setActiveTab, imageFile, setImageFile }) => 
         body: formData
       });
       const data = await response.json();
+      
+      // Handle invalid image error (non-ultrasound upload)
+      if (data.error === 'invalid_image') {
+        setResult({ 
+          score: 0, 
+          level: "Error", 
+          recommendation: "⚠️ Invalid Image Upload\n\n" + data.message + "\n\n💡 " + (data.suggestion || "Please upload a valid ovarian ultrasound scan.")
+        });
+        setLoading(false);
+        return;
+      }
       if (data.error) throw new Error(data.error);
 
-      let riskLevel = "Low";
-      if (data.risk_score > 70) riskLevel = "High";
-      else if (data.risk_score > 30) riskLevel = "Moderate";
+      // Use severity from backend directly for risk level
+      const riskLevel = data.severity === 'High' ? 'High' : 
+                        data.severity === 'Moderate' ? 'Moderate' : 'Low';
+
+      let recommendation = data.message + ". " + getRiskRecommendation(riskLevel);
+      if (data.image_confidence_note) {
+        recommendation += "\n\n⚠️ " + data.image_confidence_note;
+      }
 
       setResult({
         score: Math.round(data.risk_score),
         tabular_score: Math.round(data.tabular_risk),
         image_score: Math.round(data.image_risk),
         level: riskLevel,
-        recommendation: data.message + ". " + getRiskRecommendation(riskLevel)
+        diagnosis: data.diagnosis,
+        severity: data.severity,
+        confidence: data.confidence,
+        image_confidence_note: data.image_confidence_note || "",
+        recommendation: recommendation
       });
     } catch (err) {
       console.error(err);

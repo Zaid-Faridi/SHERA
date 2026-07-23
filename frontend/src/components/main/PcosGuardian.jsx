@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../common/Header';
 import Results from "../common/Results";
 import Tracker from '../common/Tracker';
@@ -18,6 +18,54 @@ const SHEraApp = () => {
   const [theme, setTheme] = useState('dark');
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authFormData, setAuthFormData] = useState({ name: '', email: '', password: '' });
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+
+  useEffect(() => {
+    const user = localStorage.getItem('shera_user');
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('shera_user');
+    setCurrentUser(null);
+  };
+
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthLoading(true);
+
+    const endpoint = authMode === 'signup' 
+      ? 'http://localhost:5001/api/users/register' 
+      : 'http://localhost:5001/api/users/login';
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(authFormData)
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || 'Authentication failed');
+      }
+
+      localStorage.setItem('shera_user', JSON.stringify(data));
+      setCurrentUser(data);
+      setAuthOpen(false);
+      setAuthFormData({ name: '', email: '', password: '' });
+    } catch (err) {
+      setAuthError(err.message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
   const [userData, setUserData] = useState({
     age: '',
     weight: '',
@@ -117,6 +165,8 @@ const SHEraApp = () => {
         onToggleTheme={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
         onOpenLogin={() => { setAuthMode('login'); setAuthOpen(true); }}
         onOpenSignup={() => { setAuthMode('signup'); setAuthOpen(true); }}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       {/* Mobile Navigation */}
@@ -174,24 +224,25 @@ const SHEraApp = () => {
               <button onClick={() => setAuthOpen(false)} className="text-slate-400 hover:text-white transition-colors text-xl font-bold">✕</button>
             </div>
             <div className="flex gap-2 mb-6 p-1 bg-slate-900/50 rounded-xl">
-              <button onClick={() => setAuthMode('login')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${authMode==='login' ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white'}`}>Log in</button>
-              <button onClick={() => setAuthMode('signup')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${authMode==='signup' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white'}`}>Sign up</button>
+              <button onClick={() => { setAuthMode('login'); setAuthError(''); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${authMode==='login' ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white'}`}>Log in</button>
+              <button onClick={() => { setAuthMode('signup'); setAuthError(''); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${authMode==='signup' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white'}`}>Sign up</button>
             </div>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleAuthSubmit}>
+              {authError && <div className="text-red-500 text-sm bg-red-100/10 p-2 rounded">{authError}</div>}
               {authMode === 'signup' && (
                 <div>
-                  <input type="text" placeholder="Full name" className="w-full aura-input" />
+                  <input type="text" placeholder="Full name" className="w-full aura-input" value={authFormData.name} onChange={(e) => setAuthFormData({...authFormData, name: e.target.value})} required />
                 </div>
               )}
               <div>
-                <input type="email" placeholder="Email" className="w-full aura-input" />
+                <input type="email" placeholder="Email" className="w-full aura-input" value={authFormData.email} onChange={(e) => setAuthFormData({...authFormData, email: e.target.value})} required />
               </div>
               <div>
-                <input type="password" placeholder="Password" className="w-full aura-input" />
+                <input type="password" placeholder="Password" className="w-full aura-input" value={authFormData.password} onChange={(e) => setAuthFormData({...authFormData, password: e.target.value})} required />
               </div>
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={() => setAuthOpen(false)} className="px-5 py-2 text-sm font-bold text-slate-400 hover:text-white transition-colors">Cancel</button>
-                <button type="submit" className="aura-button py-2 px-6">{authMode==='signup' ? 'Create account' : 'Log in'}</button>
+                <button type="submit" disabled={authLoading} className="aura-button py-2 px-6">{authLoading ? 'Please wait...' : (authMode==='signup' ? 'Create account' : 'Log in')}</button>
               </div>
             </form>
           </div>
