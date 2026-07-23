@@ -176,7 +176,7 @@ const Footer = ({ setActiveTab }) => {
           justifyContent: 'space-between', alignItems: 'center', gap: 12,
         }}>
           <p style={{ fontSize: '0.78rem', color: '#9B6B8A' }}>
-            © 2025 SHEra AI. All rights reserved.
+            © 2026 SHEra AI. All rights reserved.
           </p>
 
           <p style={{ fontSize: '0.75rem', color: '#B89AAA', textAlign: 'center', flex: 1, padding: '0 16px' }}>
