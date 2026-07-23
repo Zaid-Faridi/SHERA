@@ -77,7 +77,19 @@ const HealthDataSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     }
-  }
+  },
+  diagnosticHistory: [{
+    score: Number,
+    level: String,
+    diagnosis: String,
+    severity: String,
+    tabular_score: Number,
+    image_score: Number,
+    date: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, {
   timestamps: true
 });

@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const Ic = ({ n, s = 24, c = 'currentColor' }) => {
   const p = {
@@ -10,6 +12,8 @@ const Ic = ({ n, s = 24, c = 'currentColor' }) => {
     file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,
     steth: <><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></>,
     heart: <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="currentColor" stroke="none"/>,
+    download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
+    eye: <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>
   };
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width={s} height={s} viewBox="0 0 24 24"
@@ -21,6 +25,7 @@ const Ic = ({ n, s = 24, c = 'currentColor' }) => {
 
 const Results = ({ riskAssessment, setActiveTab }) => {
   const [animate, setAnimate] = useState(false);
+  const reportRef = useRef(null);
 
   useEffect(() => {
     setTimeout(() => setAnimate(true), 100);
@@ -29,7 +34,7 @@ const Results = ({ riskAssessment, setActiveTab }) => {
 
   if (!riskAssessment) return null;
 
-  const { score, level, tabular_score, image_score, diagnosis, confidence, recommendation } = riskAssessment;
+  const { score, level, tabular_score, image_score, diagnosis, confidence, recommendation, heatmap_image } = riskAssessment;
 
   // Determine colors based on risk level
   let themeColor = '#059669'; // Low (Emerald)
@@ -42,6 +47,62 @@ const Results = ({ riskAssessment, setActiveTab }) => {
     themeColor = '#F59E0B'; // Amber
     bgGradients = ['rgba(245,158,11,0.12)', 'rgba(251,191,36,0.03)'];
   }
+
+  const downloadPDFReport = () => {
+    try {
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const dateStr = new Date().toLocaleDateString();
+
+      // Header
+      doc.setFillColor(26, 10, 46);
+      doc.rect(0, 0, 210, 30, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.text("SHEra AI — Clinical Evaluation Report", 14, 18);
+      doc.setFontSize(9);
+      doc.text(`Generated Date: ${dateStr}`, 150, 18);
+
+      // Patient Summary
+      doc.setTextColor(26, 10, 46);
+      doc.setFontSize(14);
+      doc.text("Diagnostic Result Summary", 14, 42);
+      
+      doc.setFontSize(11);
+      doc.text(`Overall Risk Level: ${level || 'N/A'}`, 14, 52);
+      doc.text(`Diagnosis: ${diagnosis || 'N/A'}`, 14, 60);
+      doc.text(`Overall Risk Score: ${score || 0}%`, 14, 68);
+      doc.text(`Clinical Model Score (60% weight): ${tabular_score || 0}%`, 14, 76);
+      doc.text(`Ultrasound Model Score (40% weight): ${image_score || 0}%`, 14, 84);
+
+      // Recommendations
+      doc.setFontSize(14);
+      doc.text("Action Plan & Recommendations", 14, 100);
+
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      const splitText = doc.splitTextToSize(recommendation || "Consult a healthcare specialist.", 180);
+      doc.text(splitText, 14, 110);
+
+      // Heatmap Image if available
+      if (heatmap_image) {
+        doc.setFontSize(14);
+        doc.setTextColor(26, 10, 46);
+        doc.text("Explainable AI Vision Heatmap (Grad-CAM)", 14, 160);
+        doc.addImage(heatmap_image, 'JPEG', 14, 168, 80, 80);
+      }
+
+      // Disclaimer
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text("Medical Disclaimer: SHEra is an AI assistive screening tool. It does not provide medical diagnosis or treatment.", 14, pageHeight - 10);
+
+      doc.save(`SHEra_PCOS_AI_Report_${dateStr.replace(/\//g, '-')}.pdf`);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Failed to generate PDF report: " + err.message);
+    }
+  };
 
   const CircleProgress = ({ val, size = 160, stroke = 12, color, delay = 0 }) => {
     const radius = (size - stroke) / 2;
@@ -67,7 +128,7 @@ const Results = ({ riskAssessment, setActiveTab }) => {
   };
 
   return (
-    <div style={{
+    <div ref={reportRef} style={{
       maxWidth: 900, margin: '0 auto', padding: '40px 24px 80px',
       fontFamily: '"Plus Jakarta Sans", "Inter", sans-serif',
       color: '#1A0A2E'
@@ -136,6 +197,40 @@ const Results = ({ riskAssessment, setActiveTab }) => {
           </div>
         </div>
       </div>
+
+      {/* ── GRAD-CAM EXPLAINABLE AI HEATMAP CARD ── */}
+      {heatmap_image && (
+        <div style={{
+          padding: '28px', borderRadius: 24, background: 'white',
+          border: '1px solid rgba(124,58,237,0.15)', boxShadow: '0 12px 24px -12px rgba(124,58,237,0.08)',
+          marginBottom: 32, opacity: animate ? 1 : 0, transform: animate ? 'translateY(0)' : 'translateY(20px)',
+          transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Ic n="eye" s={20} c="#7C3AED"/>
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>Explainable AI Vision Heatmap</h3>
+              <p style={{ fontSize: '0.8rem', color: '#9B6B8A', margin: 0 }}>Grad-CAM gradient visual overlay of detected ovarian features</p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap', marginTop: 16 }}>
+            <div style={{ borderRadius: 16, overflow: 'hidden', border: '2px solid rgba(124,58,237,0.2)', width: 220, height: 220, flexShrink: 0 }}>
+              <img src={heatmap_image} alt="Grad-CAM Ovarian Heatmap" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 240 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 12px', background: 'rgba(236,72,153,0.1)', borderRadius: 999, marginBottom: 10 }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#EC4899', textTransform: 'uppercase' }}>Red / Yellow Regions</span>
+              </div>
+              <p style={{ fontSize: '0.88rem', color: '#4A1D4E', lineHeight: 1.6, margin: 0 }}>
+                The highlighted warm areas indicate where the Convolutional Neural Network identified characteristic ovarian tissue textures and cyst patterns.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── DIAGNOSIS & CONFIDENCE ── */}
       <div style={{
@@ -255,10 +350,23 @@ const Results = ({ riskAssessment, setActiveTab }) => {
         opacity: animate ? 1 : 0,
         transition: 'opacity 0.6s ease 0.5s'
       }}>
+        <button onClick={downloadPDFReport} style={{
+          padding: '16px 36px', borderRadius: 999, border: 'none',
+          background: 'linear-gradient(135deg, #7C3AED, #EC4899)', color: 'white',
+          fontSize: '0.95rem', fontWeight: 800, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 10,
+          boxShadow: '0 8px 24px rgba(124,58,237,0.3)',
+          transition: 'all 0.3s ease'
+        }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(124,58,237,0.4)'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(124,58,237,0.3)'; }}>
+          <Ic n="download" s={18} c="white"/> Download Clinical PDF Report
+        </button>
+
         <button onClick={() => setActiveTab('tracker')} style={{
-          padding: '16px 40px', borderRadius: 999, border: 'none',
+          padding: '16px 36px', borderRadius: 999, border: 'none',
           background: 'linear-gradient(135deg, #1A0A2E, #4A1D4E)', color: 'white',
-          fontSize: '1rem', fontWeight: 800, cursor: 'pointer',
+          fontSize: '0.95rem', fontWeight: 800, cursor: 'pointer',
           display: 'flex', alignItems: 'center', gap: 10,
           boxShadow: '0 8px 24px rgba(26,10,46,0.25)',
           transition: 'all 0.3s ease'
@@ -269,9 +377,9 @@ const Results = ({ riskAssessment, setActiveTab }) => {
         </button>
 
         <button onClick={() => setActiveTab('home')} style={{
-          padding: '16px 40px', borderRadius: 999, border: '2px solid rgba(155,107,138,0.2)',
+          padding: '16px 36px', borderRadius: 999, border: '2px solid rgba(155,107,138,0.2)',
           background: 'white', color: '#6B2A5F',
-          fontSize: '1rem', fontWeight: 800, cursor: 'pointer',
+          fontSize: '0.95rem', fontWeight: 800, cursor: 'pointer',
           transition: 'all 0.3s ease'
         }}
         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(155,107,138,0.05)'; }}

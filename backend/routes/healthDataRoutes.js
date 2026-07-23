@@ -274,6 +274,48 @@ router.post('/risk-assessment', verifyToken, async (req, res) => {
       level,
       factors: riskFactors
     });
+// @route   POST /api/health/save-diagnostic
+// @desc    Save AI combined diagnostic assessment run
+// @access  Private
+router.post('/save-diagnostic', verifyToken, async (req, res) => {
+  try {
+    const { score, level, diagnosis, severity, tabular_score, image_score } = req.body;
+    
+    let healthData = await HealthData.findOne({ user: req.userId });
+    if (!healthData) {
+      healthData = await HealthData.create({
+        user: req.userId,
+        cycleData: [],
+        symptoms: [],
+        lifestyleFactors: {},
+        riskAssessment: {},
+        diagnosticHistory: []
+      });
+    }
+
+    if (!healthData.diagnosticHistory) {
+      healthData.diagnosticHistory = [];
+    }
+
+    healthData.diagnosticHistory.push({
+      score,
+      level,
+      diagnosis,
+      severity,
+      tabular_score,
+      image_score,
+      date: new Date()
+    });
+
+    healthData.riskAssessment = {
+      score,
+      level: level ? level.toLowerCase() : 'low',
+      factors: [diagnosis, `Severity: ${severity}`],
+      lastUpdated: new Date()
+    };
+
+    await healthData.save();
+    res.json(healthData);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error', error: error.message });

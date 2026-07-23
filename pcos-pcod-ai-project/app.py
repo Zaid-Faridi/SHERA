@@ -7,6 +7,9 @@ import joblib
 from PIL import Image
 from werkzeug.utils import secure_filename
 import tensorflow as tf
+import base64
+import io
+import cv2
 
 app = Flask(__name__)
 CORS(app)  # Allow frontend to access the API
@@ -88,6 +91,67 @@ def validate_ultrasound_image(filepath):
         
     except Exception as e:
         return False, f"Could not process the image: {str(e)}. Please upload a valid image file (JPG, PNG)."
+
+def generate_gradcam_base64(filepath, model):
+    """
+    Generates a Grad-CAM heatmap overlay for the given image and model,
+    returning a base64-encoded JPEG image string.
+    """
+    try:
+        img_orig = cv2.imread(filepath)
+        if img_orig is None:
+            return None
+        img_orig_rgb = cv2.cvtColor(img_orig, cv2.COLOR_BGR2RGB)
+        img_resized = cv2.resize(img_orig_rgb, (128, 128))
+        img_tensor = np.expand_dims(img_resized.astype(np.float32), axis=0)
+
+        # Find the last Conv2D or functional layer in model
+        last_conv_layer = None
+        for layer in reversed(model.layers):
+            if isinstance(layer, tf.keras.layers.Conv2D) or 'conv' in layer.name.lower():
+                last_conv_layer = layer
+                break
+
+        if last_conv_layer is None:
+            return None
+
+        grad_model = tf.keras.models.Model(
+            inputs=[model.inputs],
+            outputs=[last_conv_layer.output, model.output]
+        )
+
+        with tf.GradientTape() as tape:
+            conv_outputs, predictions = grad_model(img_tensor)
+            loss = predictions[0]
+
+        grads = tape.gradient(loss, conv_outputs)
+        pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+
+        conv_outputs = conv_outputs[0]
+        heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
+        heatmap = tf.squeeze(heatmap)
+
+        heatmap = tf.maximum(heatmap, 0) / (tf.math.reduce_max(heatmap) + 1e-10)
+        heatmap_np = heatmap.numpy()
+
+        heatmap_resized = cv2.resize(heatmap_np, (img_orig_rgb.shape[1], img_orig_rgb.shape[0]))
+        heatmap_uint8 = np.uint8(255 * heatmap_resized)
+
+        heatmap_colored = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
+        heatmap_colored = cv2.cvtColor(heatmap_colored, cv2.COLOR_BGR2RGB)
+
+        superimposed = cv2.addWeighted(img_orig_rgb, 0.6, heatmap_colored, 0.4, 0)
+
+        is_success, buffer = cv2.imencode(".jpg", cv2.cvtColor(superimposed, cv2.COLOR_RGB2BGR))
+        if not is_success:
+            return None
+
+        b64_str = base64.b64encode(buffer).decode("utf-8")
+        return f"data:image/jpeg;base64,{b64_str}"
+
+    except Exception as e:
+        print(f"Grad-CAM generation failed: {str(e)}")
+        return None
 
 @app.route('/api/predict/tabular', methods=['POST'])
 def predict_tabular():
@@ -226,9 +290,16 @@ def predict_combined():
                         img_array = np.expand_dims(img_array, axis=0)
                         prediction = image_model.predict(img_array)[0][0]
                         
+                        # Generate Grad-CAM heatmap overlay
+                        heatmap_b64 = generate_gradcam_base64(filepath, image_model)
+
                         is_infected = prediction < 0.5
                         risk = (1.0 - prediction) * 100
-                        image_result = {"prediction": 1 if is_infected else 0, "risk_score": float(risk)}
+                        image_result = {
+                            "prediction": 1 if is_infected else 0,
+                            "risk_score": float(risk),
+                            "heatmap_image": heatmap_b64
+                        }
                     
                     os.remove(filepath)
 
@@ -300,6 +371,7 @@ def predict_combined():
             "tabular_risk": round(tabular_risk, 2),
             "image_risk": round(image_result["risk_score"], 2),
             "image_confidence_note": image_confidence_note,
+            "heatmap_image": image_result.get("heatmap_image"),
             "message": f"Analysis complete. Risk Level: {severity}. {diagnosis}.",
             "details": {
                 "clinical_model_weight": "60%",
