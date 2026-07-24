@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import { ClinicalReportPDF } from '../../utils/pdfGenerator';
 
 const Ic = ({ n, s = 24, c = 'currentColor' }) => {
   const p = {
@@ -48,61 +48,7 @@ const Results = ({ riskAssessment, setActiveTab }) => {
     bgGradients = ['rgba(245,158,11,0.12)', 'rgba(251,191,36,0.03)'];
   }
 
-  const downloadPDFReport = () => {
-    try {
-      const doc = new jsPDF('p', 'mm', 'a4');
-      const dateStr = new Date().toLocaleDateString();
-
-      // Header
-      doc.setFillColor(26, 10, 46);
-      doc.rect(0, 0, 210, 30, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(20);
-      doc.text("SHEra AI — Clinical Evaluation Report", 14, 18);
-      doc.setFontSize(9);
-      doc.text(`Generated Date: ${dateStr}`, 150, 18);
-
-      // Patient Summary
-      doc.setTextColor(26, 10, 46);
-      doc.setFontSize(14);
-      doc.text("Diagnostic Result Summary", 14, 42);
-      
-      doc.setFontSize(11);
-      doc.text(`Overall Risk Level: ${level || 'N/A'}`, 14, 52);
-      doc.text(`Diagnosis: ${diagnosis || 'N/A'}`, 14, 60);
-      doc.text(`Overall Risk Score: ${score || 0}%`, 14, 68);
-      doc.text(`Clinical Model Score (60% weight): ${tabular_score || 0}%`, 14, 76);
-      doc.text(`Ultrasound Model Score (40% weight): ${image_score || 0}%`, 14, 84);
-
-      // Recommendations
-      doc.setFontSize(14);
-      doc.text("Action Plan & Recommendations", 14, 100);
-
-      doc.setFontSize(10);
-      doc.setTextColor(80, 80, 80);
-      const splitText = doc.splitTextToSize(recommendation || "Consult a healthcare specialist.", 180);
-      doc.text(splitText, 14, 110);
-
-      // Heatmap Image if available
-      if (heatmap_image) {
-        doc.setFontSize(14);
-        doc.setTextColor(26, 10, 46);
-        doc.text("Explainable AI Vision Heatmap (Grad-CAM)", 14, 160);
-        doc.addImage(heatmap_image, 'JPEG', 14, 168, 80, 80);
-      }
-
-      // Disclaimer
-      const pageHeight = doc.internal.pageSize.height;
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text("Medical Disclaimer: SHEra is an AI assistive screening tool. It does not provide medical diagnosis or treatment.", 14, pageHeight - 10);
-
-      doc.save(`SHEra_PCOS_AI_Report_${dateStr.replace(/\//g, '-')}.pdf`);
-    } catch (err) {
-      console.error("PDF generation failed:", err);
-      alert("Failed to generate PDF report: " + err.message);
-    }
-  };
+  // The custom PDF generation is now handled by PDFDownloadLink and ClinicalReportPDF
 
   const CircleProgress = ({ val, size = 160, stroke = 12, color, delay = 0 }) => {
     const radius = (size - stroke) / 2;
@@ -350,18 +296,26 @@ const Results = ({ riskAssessment, setActiveTab }) => {
         opacity: animate ? 1 : 0,
         transition: 'opacity 0.6s ease 0.5s'
       }}>
-        <button onClick={downloadPDFReport} style={{
-          padding: '16px 36px', borderRadius: 999, border: 'none',
-          background: 'linear-gradient(135deg, #7C3AED, #EC4899)', color: 'white',
-          fontSize: '0.95rem', fontWeight: 800, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 10,
-          boxShadow: '0 8px 24px rgba(124,58,237,0.3)',
-          transition: 'all 0.3s ease'
-        }}
-        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(124,58,237,0.4)'; }}
-        onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(124,58,237,0.3)'; }}>
-          <Ic n="download" s={18} c="white"/> Download Clinical PDF Report
-        </button>
+        <PDFDownloadLink
+          document={<ClinicalReportPDF data={riskAssessment} />}
+          fileName={`${(riskAssessment.patientName || (riskAssessment.formData && riskAssessment.formData.name)) ? (riskAssessment.patientName || riskAssessment.formData.name).split(' ').join('_') : 'Patient'}-Clinical_report.pdf`}
+          style={{ textDecoration: 'none' }}
+        >
+          {({ loading }) => (
+            <div style={{
+              padding: '16px 36px', borderRadius: 999, border: 'none',
+              background: 'linear-gradient(135deg, #7C3AED, #EC4899)', color: 'white',
+              fontSize: '0.95rem', fontWeight: 800, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 10,
+              boxShadow: '0 8px 24px rgba(124,58,237,0.3)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(124,58,237,0.4)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(124,58,237,0.3)'; }}>
+              <Ic n="download" s={18} c="white"/> {loading ? 'Generating Report...' : 'Download Clinical PDF Report'}
+            </div>
+          )}
+        </PDFDownloadLink>
 
         <button onClick={() => setActiveTab('tracker')} style={{
           padding: '16px 36px', borderRadius: 999, border: 'none',

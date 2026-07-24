@@ -274,6 +274,11 @@ router.post('/risk-assessment', verifyToken, async (req, res) => {
       level,
       factors: riskFactors
     });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 // @route   POST /api/health/save-diagnostic
 // @desc    Save AI combined diagnostic assessment run
 // @access  Private

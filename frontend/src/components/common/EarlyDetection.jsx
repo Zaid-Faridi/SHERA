@@ -224,6 +224,11 @@ const RiskGauge = ({ score, level }) => {
    ───────────────────────────────────────────────── */
 const EarlyDetection = ({ userData, setActiveTab, imageFile, setImageFile }) => {
   /* ── ORIGINAL STATE (untouched mostly) ── */
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
+
   /* ── ADVANCED LAB INPUTS STATE ── */
   const [showLabInputs, setShowLabInputs] = useState(false);
   const [labInputs, setLabInputs]         = useState({
@@ -361,7 +366,8 @@ const EarlyDetection = ({ userData, setActiveTab, imageFile, setImageFile }) => 
         confidence: data.confidence,
         image_confidence_note: data.image_confidence_note || "",
         heatmap_image: data.heatmap_image || null,
-        recommendation: recommendation
+        recommendation: recommendation,
+        patientName: userData?.name || "Guest User"
       });
     } catch (err) {
       console.error(err);
