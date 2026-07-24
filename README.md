@@ -95,6 +95,30 @@ A built-in supportive forum.
 
 ---
 
+## 🗺️ Application Wireframe & User Flow
+
+```mermaid
+graph TD
+    A[Welcome / Landing] -->|Register/Login| B(Premium Onboarding)
+    B -->|Collect Vitals & Symptoms| C{Main Dashboard}
+    
+    C -->|Run Analysis| D[Multi-Modal AI Hub]
+    D -->|Upload Scan & Lab Data| E(AI Inference Engine)
+    E -->|Grad-CAM & Scoring| F[Interactive Results Page]
+    F -->|Export Report| G((Clinical PDF Report))
+    
+    C -->|Daily Tracking| H[Health Tracker]
+    H -->|Log Mood & Cycle| I(Diagnostic History)
+    
+    C -->|Connect| J[Social Community]
+    J -->|Post & Upvote| K(Anonymous Forums)
+    
+    C -->|Get Help| L[Specialist Directory]
+    L -->|Geospatial Search| M(Find Nearby Doctors)
+```
+
+---
+
 ## 🏗️ Technical Architecture & Stack
 
 SHEra utilizes a **Microservices-inspired Dual-Backend Architecture** to ensure high performance and strict isolation between heavy machine learning inference and core application business logic.
