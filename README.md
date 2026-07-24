@@ -4,95 +4,119 @@
   <p><strong>Early Detection • Multi-Modal AI Fusion • Automatic Image Validation • Smart Tracking • Supportive Community • Medical Guidance</strong></p>
 </div>
 
-SHEra is a comprehensive, next-generation healthcare platform explicitly designed to assist women in the early detection, tracking, and ongoing management of **Polycystic Ovary Syndrome (PCOS)** and **Polycystic Ovarian Disease (PCOD)**.
+SHEra is a comprehensive, next-generation healthcare platform designed to assist women in the early detection, tracking, and ongoing management of **Polycystic Ovary Syndrome (PCOS)** and **Polycystic Ovarian Disease (PCOD)**.
 
-Built with a premium, modern, and calming UI, SHEra bridges the gap between daily health tracking and advanced medical diagnostics.
+Built with a premium, modern, and calming UI, SHEra bridges the gap between daily health tracking and advanced medical diagnostics, bringing professional-grade AI analysis directly to users in a safe, secure, and user-friendly environment.
 
 ---
 
-## 🌟 Core Features & Modules
+## 🌟 The Problem & The Solution
+
+**The Problem:** PCOS affects up to 10-15% of women worldwide, yet it remains significantly underdiagnosed. Many women struggle with fragmented health tracking apps, delayed diagnoses, and lack of access to specialized medical advice. 
+
+**The Solution:** SHEra consolidates the entire ecosystem of women's reproductive health into a single platform. It uses dual-model Artificial Intelligence (Clinical + Imaging) to provide a highly accurate preliminary risk assessment, while offering daily tracking and community support to help manage the condition long-term.
+
+---
+
+## ✨ Core Features & Modules
 
 ### 1. 🤖 Multi-Modal AI Diagnostic Hub
-SHEra features a cutting-edge, dual-model Artificial Intelligence engine designed to give an accurate, preliminary medical screening without requiring immediate doctor intervention.
-*   **Clinical Analysis (Tabular Random Forest):** Evaluates a comprehensive 41-feature clinical matrix including physical symptoms (acne, hair loss, hirsutism, weight gain), cycle regularity, hormonal balances (FSH, LH, AMH), blood pressure, glucose, and body metrics (BMI, Waist:Hip Ratio).
-*   **Lab Report Integration:** Users can optionally input exact clinical lab metrics (LH, FSH, AMH, TSH, RBS, Follicle Counts) to enhance the clinical analysis precision up to 98%+. Unprovided features automatically fallback to intelligent population medians.
-*   **Ultrasound Analysis (Computer Vision CNN):** Users can securely upload a pelvic ultrasound image. A deep Convolutional Neural Network visually inspects the scan for ovarian follicles and morphological abnormalities (such as the "string of pearls" sign).
-*   **Explainable AI (Grad-CAM):** To build trust, the AI provides a visual heatmap overlay, highlighting exactly which regions of the ultrasound (like specific follicles) triggered a high-risk detection.
-*   **Weighted AI Fusion Scoring:** The platform fuses data using a weighted algorithm (`Clinical Data 60%` + `Visual Scan 40%`) to output a unified risk score.
-*   **Severity-Tiered Classification:** Outcomes are classified seamlessly into stages (`PCOS Likely`, `PCOS/PCOD Possible`, `Low Risk - Monitor`, `Normal`) with clamped confidence probabilities to ensure clinical validity.
+The heart of SHEra is its proprietary AI engine. It evaluates both clinical history and medical imaging simultaneously.
+*   **Clinical Analysis (Tabular Random Forest):** Evaluates a 41-feature clinical matrix.
+*   **Symptom Mapping:** Tracks physical symptoms (acne, hair loss, hirsutism, weight gain) and cycle regularity.
+*   **Hormonal Metrics:** Evaluates hormonal balances (FSH, LH, AMH).
+*   **Vitals:** Incorporates blood pressure, glucose, and body metrics (BMI, Waist:Hip Ratio).
+*   **Lab Report Integration:** Users can optionally input exact clinical lab metrics. Unprovided features fallback to intelligent population medians to ensure accuracy without forcing users to have immediate lab results.
+*   **Ultrasound Analysis (CNN):** A deep Convolutional Neural Network visually inspects pelvic ultrasound scans for ovarian cysts.
+*   **Weighted AI Fusion Scoring:** Merges outputs (`Clinical Data 60%` + `Visual Scan 40%`) into a unified, highly accurate risk score.
+*   **Severity-Tiered Classification:** Seamlessly classifies risk into stages (`PCOS Likely`, `PCOS/PCOD Possible`, `Low Risk - Monitor`, `Normal`).
 
-### 2. 🛡️ Ultrasound Image Validation Guardrail
-An integrated safety guardrail inspects uploaded files prior to AI execution to detect and reject non-ultrasound images (e.g., selfies, landscape photos, documents).
-*   **Grayscale Dominance:** Rejects colorful photos, ensuring images are monochrome.
-*   **Background Ratio & Intensity Check:** Evaluates pixel histograms and darkness ratios to confirm authentic medical imaging characteristics, returning real-time feedback to the user on invalid uploads.
+### 2. 🔍 Explainable AI & Trust
+We believe AI in healthcare must be transparent.
+*   **Grad-CAM Heatmaps:** Generates a visual heatmap overlay on ultrasound uploads.
+*   **Visual Proof:** Highlights exactly which regions of the ultrasound (e.g., specific enlarged follicles) triggered the AI's detection.
+*   **Confidence Scoring:** Provides an exact confidence percentage and clinical severity level.
 
-### 3. 📝 Premium Clinical Onboarding
-A 5-step interactive profile builder that creates a complete health snapshot:
-*   **Demographics:** Age, Height, Weight (with automated BMI calculation).
-*   **Medical History:** Menstrual regularity, pregnancy history, and existing conditions.
-*   **Lifestyle:** Sugar intake, dietary habits, and exercise frequency.
-*   **Symptom Mapping:** Granular symptom tagging for precise analysis.
+### 3. 🛡️ Smart Ultrasound Image Guardrail
+A built-in safety mechanism to ensure the AI isn't fed junk data.
+*   **Grayscale Dominance Check:** Rejects colorful photos (like selfies).
+*   **Background Ratio Check:** Evaluates pixel darkness to confirm authentic medical imaging characteristics.
+*   **Real-time Rejection:** Returns immediate API feedback if a user uploads a document or landscape photo instead of an ultrasound.
 
-### 4. 📄 Exportable Clinical PDF Reports
-Assessments aren't just transient. The system natively generates beautiful, branded, and print-ready PDF reports summarizing the risk score, patient demographics, actionable recommendations, and model confidence to share with doctors.
+### 4. 📝 Premium Clinical Onboarding
+A beautiful, interactive profile builder that creates a complete health baseline.
+*   **Demographics:** Age, height, weight (with automated BMI calculation).
+*   **Medical History:** Past conditions, pregnancy history.
+*   **Lifestyle Assessment:** Diet, exercise, and stress levels.
+*   **Symptom Check:** Detailed toggles for irregular cycles, hair loss, skin darkening, etc.
 
-### 5. 📊 Interactive Health Tracker & History
-*   **Diagnostic History:** All evaluations are securely saved to your account to track risk trajectory and improvements over time.
-*   **Daily Log:** Log menstrual cycle dates with intelligent predictions, tag daily moods using an emoji selector, and log symptom flare-ups.
+### 5. 📄 Exportable Clinical PDF Reports
+Take your data to your doctor.
+*   **Instant PDF Generation:** Converts the AI risk assessment into a branded, print-ready document.
+*   **Comprehensive Summary:** Includes the risk score, patient demographics, and actionable next steps.
+*   **Dynamic Binding:** Automatically fetches the user's name, age, and test timestamp.
 
-### 6. 💬 Supportive Social Community
-A supportive forum built directly into the platform to share personal experiences, tips, and ask questions anonymously, complete with categorization tags (e.g., `#Diet`, `#MentalHealth`) and upvoting capabilities.
+### 6. 📊 Interactive Health Tracker
+A daily digital diary tailored for reproductive health.
+*   **Cycle Tracking:** Log menstrual cycle dates with intelligent future predictions.
+*   **Mood Logging:** Tag daily moods using a responsive emoji selector.
+*   **Symptom Flare-ups:** Record daily symptoms to track patterns over time.
+*   **Diagnostic History:** Securely saves all past AI evaluations to track your risk trajectory.
 
-### 7. 🩺 Find a Specialist Directory
-A geospatial directory of verified gynecologists and endocrinologists that suggests nearby doctors based on your location.
+### 7. 💬 Anonymous Social Community
+A built-in supportive forum.
+*   **Share & Connect:** Share personal experiences, ask questions, and offer advice.
+*   **Categorized Tags:** Filter by `#Diet`, `#MentalHealth`, `#TTC` (Trying to Conceive), `#Workouts`.
+*   **Upvotes & Comments:** Foster an encouraging digital environment.
+
+### 8. 🩺 Find a Specialist Directory
+*   **Geospatial Search:** Suggests nearby gynecologists and endocrinologists.
+*   **Distance Calculation:** Uses the Haversine formula based on the user's location.
 
 ---
 
-## 🏗️ Technical Architecture
+## 🏗️ Technical Architecture & Stack
 
-SHEra utilizes a **Microservices-inspired Dual-Backend Architecture** to ensure high performance and strict isolation between machine learning inference and core application business logic.
+SHEra utilizes a **Microservices-inspired Dual-Backend Architecture** to ensure high performance and strict isolation between heavy machine learning inference and core application business logic.
 
-```
-                      +----------------------------------+
-                      |       React Client (Vite)        |
-                      |      http://localhost:5173       |
-                      +----------------+-----------------+
-                                       |
-                   +-------------------+-------------------+
-                   |                                       |
-                   v (Port 5001)                           v (Port 5000)
-    +--------------+---------------+       +---------------+--------------+
-    |    Node.js / Express API     |       |   Python / Flask AI Engine   |
-    |      Application Server      |       |       Inference Engine       |
-    +--------------+---------------+       +---------------+--------------+
-                   |                                       |
-                   v                                       v
-    +--------------+---------------+       +---------------+--------------+
-    |   MongoDB Database (Mongoose)|       | • Tabular RF Model (41 feats)|
-    |   • Users & Authentication   |       | • Visual CNN Model (128x128) |
-    |   • Health Logs & Moods      |       | • Image Validation Guardrail |
-    |   • Community Posts & Doctor |       | • Weighted 60/40 Fusion      |
-    +------------------------------+       +------------------------------+
-```
+### 🎨 Frontend (Client)
+*   **Framework:** React 18 & Vite
+*   **Styling:** Tailwind CSS & Custom Glassmorphism UI
+*   **PDF Generation:** `@react-pdf/renderer` & `jsPDF`
+*   **Icons:** Lucide React
+*   **Animations:** CSS Keyframes & Framer Motion concepts
 
-### 🧠 1. The AI Inference Engine (Python / Flask)
-*   **Directory:** `pcos-pcod-ai-project/`
-*   **Port:** `5000`
-*   **Stack:** Python 3.9+, Flask, Flask-CORS, TensorFlow/Keras, OpenCV, Scikit-Learn, Pandas.
+### 💾 Application Server (Node.js)
+*   **Runtime:** Node.js v18+
+*   **Framework:** Express.js
+*   **Database:** MongoDB & Mongoose ORM
+*   **Authentication:** JWT (JSON Web Tokens) & Bcrypt password hashing
+*   **Data Models:** `User`, `HealthData`, `Community`, `Doctor`
+
+### 🧠 AI Inference Engine (Python)
+*   **Runtime:** Python 3.9+
+*   **Framework:** Flask & Flask-CORS
+*   **Machine Learning:** TensorFlow/Keras, Scikit-Learn
+*   **Data Processing:** Pandas, NumPy, OpenCV (cv2)
 *   **Models:**
-    *   `models/tabular_model.pkl`: A Random Forest Classifier trained on 41 clinical parameters.
-    *   `models/image_model.h5`: A CNN trained to classify ultrasound scans (`infected` vs `noninfected`).
+    *   **Tabular Model:** `tabular_model.pkl` (Random Forest Classifier)
+    *   **Image Model:** `image_model.h5` (Convolutional Neural Network)
 
-### 💾 2. The Application Server (Node.js / Express)
-*   **Directory:** `backend/`
-*   **Port:** `5001`
-*   **Stack:** Node.js, Express.js, MongoDB (Mongoose), JWT, Bcrypt.
+---
 
-### 🎨 3. The Frontend Client (React / Vite)
-*   **Directory:** `frontend/`
-*   **Port:** `5173`
-*   **Stack:** React 18, Vite, Tailwind CSS, jsPDF.
-*   **Design System:** Glassmorphism UI, gradient meshes, micro-animations, and dynamic data visualization.
+## 📡 Core API Endpoints
+
+### Application API (`localhost:5001`)
+*   **Auth:** `POST /api/auth/register`, `POST /api/auth/login`
+*   **Tracking:** `POST /api/health/log`, `GET /api/health/history`
+*   **Diagnostics:** `POST /api/health/save-diagnostic`
+*   **Community:** `GET /api/community/posts`, `POST /api/community/create`
+
+### AI Engine API (`localhost:5000`)
+*   **Dual Fusion Prediction:** `POST /api/predict/combined`
+    *   Accepts `multipart/form-data` with `file` (image) and `clinical_data` (JSON).
+*   **Standalone Image:** `POST /api/predict/image`
+*   **Standalone Tabular:** `POST /api/predict/tabular`
 
 ---
 
@@ -106,12 +130,14 @@ SHEra utilizes a **Microservices-inspired Dual-Backend Architecture** to ensure 
 ### Step 1: Start the AI Backend
 ```bash
 cd pcos-pcod-ai-project
+# Optional: Create virtual environment
+# python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 python3 app.py
 ```
 *App starts on `http://localhost:5000`*
 
-### Step 2: Start the Node.js API
+### Step 2: Start the Node.js Application Server
 ```bash
 cd backend
 npm install
@@ -132,8 +158,9 @@ npm run dev
 ## 🔒 Security & Privacy Notice
 
 SHEra prioritizes health data security:
-*   Passwords and sessions are protected via **bcrypt** hashing and **JSON Web Tokens (JWT)**.
-*   Ultrasound scans uploaded for diagnostic evaluation are processed entirely in memory or temporary storage and **immediately deleted** from disk upon completion. They are never permanently stored or logged.
+*   Passwords and sessions are protected via strong hashing and secure tokens.
+*   Ultrasound scans uploaded for diagnostic evaluation are processed entirely in temporary memory.
+*   **Images are immediately deleted** from the disk upon completion of the AI analysis. They are never permanently stored, logged, or used for subsequent training.
 
 ---
 
