@@ -106,35 +106,43 @@ def generate_gradcam_base64(filepath, model):
         img_tensor = np.expand_dims(img_resized.astype(np.float32), axis=0)
 
         # Find the last Conv2D or functional layer in model
-        last_conv_layer = None
+        conv_layer = None
         for layer in reversed(model.layers):
             if isinstance(layer, tf.keras.layers.Conv2D) or 'conv' in layer.name.lower():
-                last_conv_layer = layer
+                conv_layer = layer
                 break
 
-        if last_conv_layer is None:
+        if conv_layer is None:
             return None
 
-        grad_model = tf.keras.models.Model(
-            inputs=[model.inputs],
-            outputs=[last_conv_layer.output, model.output]
-        )
-
+        # Layer-by-layer forward tape pass for Keras 3 Sequential compatibility
         with tf.GradientTape() as tape:
-            conv_outputs, predictions = grad_model(img_tensor)
-            loss = predictions[0]
+            x = img_tensor
+            conv_output = None
+            for layer in model.layers:
+                x = layer(x)
+                if layer.name == conv_layer.name:
+                    conv_output = x
+                    tape.watch(conv_output)
+            loss = x[0]
 
-        grads = tape.gradient(loss, conv_outputs)
+        grads = tape.gradient(loss, conv_output)
+        if grads is None:
+            return None
         pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
 
-        conv_outputs = conv_outputs[0]
-        heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
-        heatmap = tf.squeeze(heatmap)
+        conv_output_np = conv_output[0].numpy()
+        pooled_grads_np = pooled_grads.numpy()
 
-        heatmap = tf.maximum(heatmap, 0) / (tf.math.reduce_max(heatmap) + 1e-10)
-        heatmap_np = heatmap.numpy()
+        heatmap = conv_output_np @ pooled_grads_np[..., np.newaxis]
+        heatmap = np.squeeze(heatmap)
 
-        heatmap_resized = cv2.resize(heatmap_np, (img_orig_rgb.shape[1], img_orig_rgb.shape[0]))
+        heatmap = np.maximum(heatmap, 0)
+        max_val = np.max(heatmap)
+        if max_val > 0:
+            heatmap = heatmap / max_val
+
+        heatmap_resized = cv2.resize(heatmap, (img_orig_rgb.shape[1], img_orig_rgb.shape[0]))
         heatmap_uint8 = np.uint8(255 * heatmap_resized)
 
         heatmap_colored = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
